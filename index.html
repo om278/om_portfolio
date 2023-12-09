@@ -4,229 +4,369 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Om Portfolio</title>
+    <title>Om Portofolio</title>
     <link rel="shortcut icon" href="IMG_20231110_203942_094.jpg" type="image/x-icon">
     <link rel="stylesheet" href="style.css" class="css">
     
 </head>
 <body>
-    
-
-<!---- Hidden Open / Close Toggles ---->
-<input type="radio" id="nav-close" name="nav-toggle" value="nav-close">
-<input type="radio" id="nav-toggle" name="nav-toggle" value="nav-toggle">
-<!---- END Hidden Toggles ---->
-
-<!---- Visual Open Menu Toggle ---->
-<a href="javascript:void(0);" class="nav-toggle">
-
-	<label for="nav-toggle"></label>
-    
-
-</a>
-<!---- END Visual Open Menu Toggle ---->
-
-<!---- Visual Close Menu Toggle ----->
-<a href="javascript:void(0);" class="nav-close">
-
-	<label for="nav-close"></label>
-
-	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-		<path fill-rule="evenodd" d="M13.854 2.146a.5.5 0 0 1 0 .708l-11 11a.5.5 0 0 1-.708-.708l11-11a.5.5 0 0 1 .708 0Z" />
-		<path fill-rule="evenodd" d="M2.146 2.146a.5.5 0 0 0 0 .708l11 11a.5.5 0 0 0 .708-.708l-11-11a.5.5 0 0 0-.708 0Z" />
-	</svg>
-
-</a>
-
-<nav>
-
-	<ul>
-
-		<li><a href="#" title="Home" rel="noopener">Home</a></li>
-
-		<li><a href="#" title="About" rel="noopener">About</a></li>
-
-		<li><a href="#" title="Services" rel="noopener">Services</a></li>
-
-		<li><a href="#" title="Portfolio" rel="noopener">Portfolio</a></li>
-
-		<li><a href="#" title="Contact" rel="noopener">Contact</a></li>
-
-	</ul>
-
-</nav>
-<!---- END Main Navigation ---->
-<div class="content">
-	<img src="banner.jpg" />
-</div>
-<canvas></canvas>
-
-<div class="overlay">
-	Welcome to <br><br><br><span style="color: rgb(238, 83, 83);">Om Portfolio</span><br><br>
-    <center><a href="banner.jpg"><button class="button-8" >Resume</button></a></center>
-</div>
-
-
-
-
-<script type="x-shader/x-fragment" id="vertShader">
-	precision highp float;
-
-    attribute vec2 aPosition;
-    varying vec2 vUv;
-    varying vec2 vL;
-    varying vec2 vR;
-    varying vec2 vT;
-    varying vec2 vB;
-    uniform vec2 u_vertex_texel;
-
-    void main () {
-        vUv = aPosition * .5 + .5;
-        vL = vUv - vec2(u_vertex_texel.x, 0.);
-        vR = vUv + vec2(u_vertex_texel.x, 0.);
-        vT = vUv + vec2(0., u_vertex_texel.y);
-        vB = vUv - vec2(0., u_vertex_texel.y);
-        gl_Position = vec4(aPosition, 0., 1.);
-    }
-</script>
-
-<script type="x-shader/x-fragment" id="fragShaderAdvection">
-	precision highp float;
-    precision highp sampler2D;
-
-    varying vec2 vUv;
-    uniform sampler2D u_velocity_txr;
-    uniform sampler2D u_input_txr;
-    uniform vec2 u_vertex_texel;
-    uniform vec2 u_output_textel;
-    uniform float u_dt;
-    uniform float u_dissipation;
-
-    vec4 bilerp (sampler2D sam, vec2 uv, vec2 tsize) {
-        vec2 st = uv / tsize - 0.5;
-
-        vec2 iuv = floor(st);
-        vec2 fuv = fract(st);
-
-        vec4 a = texture2D(sam, (iuv + vec2(0.5, 0.5)) * tsize);
-        vec4 b = texture2D(sam, (iuv + vec2(1.5, 0.5)) * tsize);
-        vec4 c = texture2D(sam, (iuv + vec2(0.5, 1.5)) * tsize);
-        vec4 d = texture2D(sam, (iuv + vec2(1.5, 1.5)) * tsize);
-
-        return mix(mix(a, b, fuv.x), mix(c, d, fuv.x), fuv.y);
-    }
-
-    void main () {
-        vec2 coord = vUv - u_dt * bilerp(u_velocity_txr, vUv, u_vertex_texel).xy * u_vertex_texel;
-        gl_FragColor = u_dissipation * bilerp(u_input_txr, coord, u_output_textel);
-        gl_FragColor.a = 1.;
-    }
-</script>
-
-<script type="x-shader/x-fragment" id="fragShaderDivergence">
-	precision highp float;
-    precision highp sampler2D;
-
-    varying highp vec2 vUv;
-    varying highp vec2 vL;
-    varying highp vec2 vR;
-    varying highp vec2 vT;
-    varying highp vec2 vB;
-    uniform sampler2D u_velocity_txr;
-
-    void main () {
-        float L = texture2D(u_velocity_txr, vL).x;
-        float R = texture2D(u_velocity_txr, vR).x;
-        float T = texture2D(u_velocity_txr, vT).y;
-        float B = texture2D(u_velocity_txr, vB).y;
-
-        float div = .5 * (R - L + T - B);
-        gl_FragColor = vec4(div, 0., 0., 1.);
-    }
-</script>
-
-<script type="x-shader/x-fragment" id="fragShaderPressure">
-	precision highp float;
-    precision highp sampler2D;
-
-    varying highp vec2 vUv;
-    varying highp vec2 vL;
-    varying highp vec2 vR;
-    varying highp vec2 vT;
-    varying highp vec2 vB;
-    uniform sampler2D u_pressure_txr;
-    uniform sampler2D u_divergence_txr;
-
-    void main () {
-        float L = texture2D(u_pressure_txr, vL).x;
-        float R = texture2D(u_pressure_txr, vR).x;
-        float T = texture2D(u_pressure_txr, vT).x;
-        float B = texture2D(u_pressure_txr, vB).x;
-        float C = texture2D(u_pressure_txr, vUv).x;
-        float divergence = texture2D(u_divergence_txr, vUv).x;
-        float pressure = (L + R + B + T - divergence) * 0.25;
-        gl_FragColor = vec4(pressure, 0., 0., 1.);
-    }
-</script>
-
-<script type="x-shader/x-fragment" id="fragShaderGradientSubtract">
-	precision highp float;
-    precision highp sampler2D;
-
-    varying highp vec2 vUv;
-    varying highp vec2 vL;
-    varying highp vec2 vR;
-    varying highp vec2 vT;
-    varying highp vec2 vB;
-    uniform sampler2D u_pressure_txr;
-    uniform sampler2D u_velocity_txr;
-
-    void main () {
-        float L = texture2D(u_pressure_txr, vL).x;
-        float R = texture2D(u_pressure_txr, vR).x;
-        float T = texture2D(u_pressure_txr, vT).x;
-        float B = texture2D(u_pressure_txr, vB).x;
-        vec2 velocity = texture2D(u_velocity_txr, vUv).xy;
-        velocity.xy -= vec2(R - L, T - B);
-        gl_FragColor = vec4(velocity, 0., 1.);
-    }
-</script>
-
-<script type="x-shader/x-fragment" id="fragShaderPoint">
-	precision highp float;
-    precision highp sampler2D;
-
-    varying vec2 vUv;
-    uniform sampler2D u_input_txr;
-    uniform float u_ratio;
-    uniform vec3 u_point_value;
-    uniform vec2 u_point;
-    uniform float u_point_size;
-
-    void main () {
-        vec2 p = vUv - u_point.xy;
-        p.x *= u_ratio;
-        vec3 splat = pow(2., -dot(p, p) / u_point_size) * u_point_value;
-        vec3 base = texture2D(u_input_txr, vUv).xyz;
-        gl_FragColor = vec4(base + splat, 1.);
-    }
-</script>
-
-<script type="x-shader/x-fragment" id="fragShaderDisplay">
-	precision highp float;
-    precision highp sampler2D;
-
-    varying vec2 vUv;
-    uniform sampler2D u_output_texture;
-
-    void main () {
-        vec3 C = texture2D(u_output_texture, vUv).rgb;
-        float a = max(C.r, max(C.g, C.b));
-        a = pow(.1 * a, .1);
-        a = clamp(a, 0., 1.);
-        gl_FragColor = vec4(1. - C, 1. - a);
-    }
-</script>
+    <body>
+        <h1 id="welcome">Welcome To <br> Om Portofolio</h1>
+        <div id="all_content">
+          <div id="main">
+            <div id="circle">
+              <div id="astronaut">
+                <div class="button" id="about">About Me</div>
+              </div>
+              <div id="sattelite">
+                <div class="button" id="projects">My Projects</div>
+              </div>
+              <div id="sun">
+                <div></div>
+              </div>
+              <div id="moon">
+                <div class="button" id="contact"><span style="border:1px solid white;border-radius:1em;padding:2px;">Contact</span><br>|</div>
+              </div>
+      
+              <div id="alien_ship">
+                <div id="quotes_page"></div>
+              </div>
+      
+              <div id="dim2">
+                <img src="https://imgur.com/VTNbF8c.gif" id="bh">
+              </div>
+            </div>
+      
+            <div class="buttons" id="left_button">
+              < </div>
+                <div class="buttons" id="right_button"> > </div>
+                <img src="https://imgur.com/ZtVo9SJ.jpg" id="planet" alt="planet"></img>
+                <div id="nav">
+                  <img id="my_img" src="https://imgur.com/hiltcuo.jpg">
+                  <span class="fa fa-gears"></span>
+                  <span class="fa fa-send-o" onclick="go_to(-180)"></span>
+                  <span class="fa fa-gamepad" onclick="go_to(-90)"></span>
+                  <span class="fa fa-address-card" onclick="go_to(0)"></span>
+                </div>
+            </div>
+      
+            <!--About page-->
+            <div id="container">
+              <div class="grid-container">
+                <div class="area1">
+                  <h3>Details<span id="close" onclick="open_page('container')">x<span></h3>
+                  <p>Name: Omkant Shende</p>
+                  <p>Age: 22</p>
+                  <p>Gender: Male</p>
+                  <p>Occupation: Student</p>
+                  <p>Location: Nagpur</p>
+      
+                </div>
+                <div class="area2">
+                  <h3>About Me</h3>
+                  <p>
+                    Omkant Shende🧑🏻‍💻<br>
+🎓Bachelor's in Artificial Intelligence <br>
+🏫GH Raisoni Institute of Engineering and Technology, Nagpur. <br>
+🤖Aspiring Al Enthusiast | 🌐Passionate about Machine Learning |💡 Exploring the Boundaries of Al. <br>
+📚Learning today, to innovate tomorrow Connect with me to discuss Al, tech, and innovation! Let's shape the future together. <br>
+                  </p>
+                </div>
+                <div class="area3">
+                  <h3>Skills</h3>
+                  <span class="skill">Programming</span>
+                  <span class="skill">Web development</span>
+                  <span class="skill">Backend</span>
+                  <span class="skill">Stories (SF / Horror)</span>
+                  <span class="skill">Badminton</span>
+                  <span class="skill">Tennis</span>
+                  <span class="skill">Reading</span>
+                </div>
+                <div class="my_image">
+      
+                </div>
+              </div>
+            </div>
+            <!--Projects page-->
+      
+            <div id="cards-container">
+              <h3 style="cursor:pointer;" onclick="open_page('cards-container')"><i class="fa fa-arrow-circle-left"></i> Back</h3>
+              <h3>Games <span class="fa fa-gamepad"></span></h3>
+              <div class="element">
+                <!--1-->
+                <div class="obj">
+                  <img src="https://imgur.com/nGgNSRo.jpg" class=obj-img>
+                  <div class="project_title">Flappy Bird</div>
+                  <a href="https://codepen.io/AlexTAG/pen/XWjWbxg" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--2-->
+                <div class="obj">
+                  <img src="https://imgur.com/4w4OsIf.jpg" class=obj-img>
+                  <div class="project_title">Murder Mystery</div>
+                  <a href="https://codepen.io/AlexTAG/pen/MWePEoj" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--2.1-->
+                <div class="obj">
+                  <img src="https://imgur.com/XhY2HB4.jpg" class=obj-img>
+                  <div class="project_title">Puzzle Game</div>
+                  <a href="https://codepen.io/AlexTAG/pen/MWOYaJp" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--3-->
+                <div class="obj">
+                  <img src="https://imgur.com/3Fugmg2.jpg" class=obj-img>
+                  <div class="project_title">Christmas</div>
+                  <a href="https://codepen.io/AlexTAG/pen/gOwPvQR" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--4-->
+                <div class="obj">
+                  <img src="https://imgur.com/If3tptX.jpg" class=obj-img>
+                  <div class="project_title">Zombie Run</div>
+                  <a href="https://codepen.io/AlexTAG/pen/BazqwzE" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--5-->
+                <div class="obj">
+                  <img src="https://imgur.com/9HVV82i.jpg" class=obj-img>
+                  <div class="project_title">Fast Food</div>
+                  <a href="https://codepen.io/AlexTAG/pen/YzWJreJ" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--5.5-->
+                <div class="obj">
+                  <img src="https://imgur.com/9COouJS.jpg" class=obj-img>
+                  <div class="project_title">WolvesVille</div>
+                  <a href="https://codepen.io/AlexTAG/pen/LYzNaLM" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--6-->
+                <div class="obj">
+                  <img src="https://imgur.com/1OzLXEr.jpg" class=obj-img>
+                  <div class="project_title">Lost in the Caves</div>
+                  <a href="https://codepen.io/AlexTAG/pen/jOreGRV" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--7-->
+                <div class="obj">
+                  <img src="https://imgur.com/d91671T.jpg" class=obj-img>
+                  <div class="project_title">Hangman Unlimited</div>
+                  <a href="https://codepen.io/AlexTAG/pen/dyXgVrw" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--7.5-->
+                <div class="obj">
+                  <img src="https://imgur.com/XLPvQHK.jpg" class=obj-img>
+                  <div class="project_title">Fishing</div>
+                  <a href="https://codepen.io/AlexTAG/pen/dyzrrmY" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--8-->
+                <div class="obj">
+                  <img src="https://imgur.com/SvpSpK4.jpg" class=obj-img>
+                  <div class="project_title">Hidden Cards</div>
+                  <a href="https://codepen.io/AlexTAG/pen/abZRLVV" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--9-->
+                <div class="obj">
+                  <img src="https://imgur.com/TFgG7MQ.jpg" class=obj-img>
+                  <div class="project_title">Lava is Rising</div>
+                  <a href="https://code.sololearn.com/W633K7RqhVca/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--10-->
+                <div class="obj">
+                  <img src="https://imgur.com/F2QRjku.jpg" class=obj-img>
+                  <div class="project_title">Find the Letter</div>
+                  <a href="https://code.sololearn.com/W41zc7NAPUDl/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--11-->
+                <div class="obj">
+                  <img src="https://imgur.com/EnK6ln5.jpg" class=obj-img>
+                  <div class="project_title">Ghost Hunters</div>
+                  <a href="https://code.sololearn.com/WM7m64H6q9j2/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--12-->
+                <div class="obj">
+                  <img src="https://imgur.com/2hFwXQq.jpg" class=obj-img>
+                  <div class="project_title">A Story with Thieves</div>
+                  <a href="https://code.sololearn.com/W5xU6PrXx3zr/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--13-->
+                <div class="obj">
+                  <img src="https://imgur.com/tVVOzX3.jpg" class=obj-img>
+                  <div class="project_title">Just Fishing</div>
+                  <a href="https://codepen.io/AlexTAG/pen/dyzrrmY" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+              </div>
+              <h3>CSS Arts <span class="fa fa-paint-brush"></span></h3>
+              <div class="element">
+                <!--1-->
+                <div class="obj">
+                  <img src="https://imgur.com/pmsgh1o.jpg" class=obj-img>
+                  <div class="project_title">CSS Slenderman</div>
+                  <a href="https://code.sololearn.com/WRWu4fdmLcmb/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--2-->
+                <div class="obj">
+                  <img src="https://imgur.com/w5sl8PB.jpg" class=obj-img>
+                  <div class="project_title">1 Div Weapons</div>
+                  <a href="https://code.sololearn.com/WmB8lFC4o15Y" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--3-->
+                <div class="obj">
+                  <img src="https://imgur.com/NhQFkkP.jpg" class=obj-img>
+                  <div class="project_title">Romanian Flag</div>
+                  <a href="https://code.sololearn.com/W8Y4hm4QZ5c1/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--4-->
+                <div class="obj">
+                  <img src="https://imgur.com/uK7jOzP.jpg" class=obj-img>
+                  <div class="project_title">Among Us Art</div>
+                  <a href="https://code.sololearn.com/Wnj1a5ULTz4I/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--5-->
+                <div class="obj">
+                  <img src="https://imgur.com/BerNph9.jpg" class=obj-img>
+                  <div class="project_title">Chainsaw</div>
+                  <a href="https://code.sololearn.com/WEMz4oBs2581/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--6-->
+                <div class="obj">
+                  <img src="https://imgur.com/g97ncIn.jpg" class=obj-img>
+                  <div class="project_title">Hand Watch</div>
+                  <a href="https://code.sololearn.com/WdccD3XAF9Xi/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--7-->
+                <div class="obj">
+                  <img src="https://imgur.com/p9z56AT.jpg" class=obj-img>
+                  <div class="project_title">Tree in snow</div>
+                  <a href="https://code.sololearn.com/WF8hsMYmtA4t/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--8-->
+                <div class="obj">
+                  <img src="https://imgur.com/K9q9fey.jpg" class=obj-img>
+                  <div class="project_title">Cherries</div>
+                  <a href="https://code.sololearn.com/W3VooBArVhe6/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+              </div>
+              <h3>Websites <span class="fa fa-book"></span></h3>
+              <div class="element">
+                <!--1-->
+                <div class="obj">
+                  <img src="https://imgur.com/HZhoPBG.jpg" class=obj-img>
+                  <div class="project_title">Portofolio</div>
+                  <a href="https://codepen.io/AlexTAG/pen/eYBdXPZ" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--1.1-->
+                <div class="obj">
+                  <img src="https://imgur.com/LTP7n74.jpg" class=obj-img>
+                  <div class="project_title">BlackBoard Clone</div>
+                  <a href="https://codepen.io/AlexTAG/pen/jOGJwEJ" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--2-->
+                <div class="obj">
+                  <img src="https://imgur.com/CkIkV4t.jpg" class=obj-img>
+                  <div class="project_title">Sword Nav Website</div>
+                  <a href="https://code.sololearn.com/WCce8ODi55OT/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--3-->
+                <div class="obj">
+                  <img src="https://imgur.com/Gh8hcPk.jpg" class=obj-img>
+                  <div class="project_title">Legend of Dracula</div>
+                  <a href="https://code.sololearn.com/WVhXus2ukgIw/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--4-->
+                <div class="obj">
+                  <img src="https://imgur.com/ySGIBn8.jpg" class=obj-img>
+                  <div class="project_title">Game of Thrones</div>
+                  <a href="https://code.sololearn.com/W3dWhKhE6WMY/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--5-->
+                <div class="obj">
+                  <img src="https://imgur.com/gAMtW6P.jpg" class=obj-img>
+                  <div class="project_title">Police</div>
+                  <a href="https://code.sololearn.com/WgBQum0l2vD5/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--6-->
+                <div class="obj">
+                  <img src="https://imgur.com/XcTZ7A0.jpg" class=obj-img>
+                  <div class="project_title">Christmas Website</div>
+                  <a href="https://code.sololearn.com/WbkB6tbbR8Jm/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+              </div>
+              <h3>Others <span class="fa fa-plus-circle"></span></h3>
+              <div class="element">
+                <!--0.9-->
+                <div class="obj">
+                  <img src="https://imgur.com/zLVA3P9.jpg" class=obj-img>
+                  <div class="project_title">QR Code Converter</div>
+                  <a href="https://codepen.io/AlexTAG/pen/dyVxWga" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--1-->
+                <div class="obj">
+                  <img src="https://imgur.com/TjYbZBl.jpg" class=obj-img>
+                  <div class="project_title">Strange Planets</div>
+                  <a href="https://code.sololearn.com/WUrkuDJEk3bU/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--1.05-->
+                <div class="obj">
+                  <img src="https://imgur.com/Z7y5Z6g.jpg" class=obj-img>
+                  <div class="project_title">Oak Inn (database)</div>
+                  <a href="https://code.sololearn.com/WCiW55N39U9n" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--2-->
+                <div class="obj">
+                  <img src="https://imgur.com/9i2647p.jpg" class=obj-img>
+                  <div class="project_title">Planets Navigation</div>
+                  <a href="https://code.sololearn.com/W28pEDYDiK9S/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--3-->
+                <div class="obj">
+                  <img src="https://imgur.com/Ht7qOwU.jpg" class=obj-img>
+                  <div class="project_title">Cosmic Calculator</div>
+                  <a href="https://code.sololearn.com/WZe726b1K8bH/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--4-->
+                <div class="obj">
+                  <img src="https://imgur.com/kSaqG6Y.jpg" class=obj-img>
+                  <div class="project_title">Animal Soul</div>
+                  <a href="https://code.sololearn.com/Wal08iIdabS6/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--5-->
+                <div class="obj">
+                  <img src="https://imgur.com/Nxbkmaz.jpg" class=obj-img>
+                  <div class="project_title">Notebook</div>
+                  <a href="https://code.sololearn.com/WcR00ubhTOwQ/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--6-->
+                <div class="obj">
+                  <img src="https://imgur.com/7p2bul5.jpg" class=obj-img>
+                  <div class="project_title">Fight Simulator</div>
+                  <a href="https://code.sololearn.com/Wzy68gahP8OL/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--7-->
+                <div class="obj">
+                  <img src="https://imgur.com/mWr7i0Q.jpg" class=obj-img>
+                  <div class="project_title">Templar Cypher</div>
+                  <a href="https://code.sololearn.com/WQ04WB0I92EZ/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+                <!--8-->
+                <div class="obj">
+                  <img src="https://imgur.com/3VNWio8.jpg" class=obj-img>
+                  <div class="project_title">Bloody Mary</div>
+                  <a href="https://code.sololearn.com/WzAFQb4PTS2C/#" target='_blank' class="glyphicon glyphicon-play-circle"></a>
+                </div>
+              </div>
+            </div>
+      
+            <!--Contact-page-->
+            <div id="contact-container">
+             <a href=""> <i class="fa fa-facebook-official"></i></a>
+              
+              <a href="https://www.instagram.com/Omn_shende/"><i class="fa fa-instagram"></i></a>
+              <i class="fa fa-phone-square"></i>
+              <a href="https://www.linkedin.com/in/omkant-shende-b63930218/"><i class="fa fa-send-o"></i></a>
+              <a href="https://www.youtube.com/channel/UC-8HsG8dez5YeF4GskVGx3A"><i class="fa fa-youtube-play"></i></a>
+              <div id="contact-x">x</div>
+              <div id="help-sign">
+                <img src="https://imgur.com/cImPupF.jpg" id="alien-sign"></img>
+                What can I help you with?
+              </div>
+            </div>
+          </div>
+      </body>
 <script src="script.js"></script>
 </body>
 </html>
