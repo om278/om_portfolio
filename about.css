@@ -1,210 +1,64 @@
-@import url("https://fonts.googleapis.com/css?family=EB+Garamond:400,500|Roboto:400,700");
-
-$white: #fff;
-$gray: #a5a5a5;
-$black: #322c2c;
-$text: #8e8e8e;
-
-* {
-  box-sizing: border-box;
-  &::before,
-  &::after {
-    box-sizing: border-box;
-  }
-}
-
-body {
-  font-family: "Roboto", sans-serif;
-  font-size: 1rem;
-  font-weight: 400;
-  line-height: 1.6;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500&display=swap');
+*{
   margin: 0;
   padding: 0;
-  color: $text;
-  background: $white;
-  text-rendering: optimizeLegibility;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
 }
-
-h1,
-h2,
-h3 {
-  font-family: "EB Garamond", serif;
-  color: $black;
-  line-height: 1.1;
+.about-us{
+  height: 100vh;
+  width: 100%;
+  padding: 90px 0;
+  background: #ddd;
 }
-
-h2,
-h3 {
-  color: $black;
-  font-weight: 400;
-}
-
-h1 {
-  font-size: 2.325rem;
-  font-weight: 500;
-  margin: 0;
-}
-
-h2 {
-  font-size: 2rem;
-  margin: 0 0 2rem;
-}
-
-h3 {
-  font-size: 1.75rem;
-  margin: 0 0 2rem;
-}
-
-p {
-  margin: 0 0 1.5rem;
-  &:nth-child(4) {
-    margin: 0;
-  }
-  &.copyright {
-    margin: 1.5rem 0;
-  }
-}
-
-a {
-  color: $gray;
-  text-decoration: none;
-  &:hover {
-    color: $black;
-  }
-}
-
-blockquote {
-  font-style: italic;
-  text-align: center;
-  width: 40rem;
+.pic{
   height: auto;
-  max-width: 100%;
-  margin: auto;
+  width:  302px;
+}
+.about{
+  width: 1130px;
+  max-width: 85%;
+  margin: 0 auto;
   display: flex;
   align-items: center;
+  justify-content: space-around;
 }
-
-ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  li {
-    margin: 0 1.5rem 0 0;
-  }
+.text{
+  width: 540px;
 }
-
-.intro {
-  margin: 1rem 0;
-  padding: 0;
-  width: 100%;
+.text h2{
+  font-size: 90px;
+  font-weight: 600;
+  margin-bottom: 10px;
 }
-
-nav {
-  position: relative;
-  padding: 1.25rem 0 1.25rem 0;
-  ul {
-    display: flex;
-    justify-content: flex-start;
-    li {
-      font-size: 0.875rem;
-      font-weight: 700;
-      letter-spacing: 0.125rem;
-      text-transform: uppercase;
-      margin: 0 1.5rem 0 0;
-      &:nth-child(3) {
-        margin: 0;
-      }
-    }
-  }
+.text h5{
+  font-size: 22px;
+  font-weight: 500;
+  margin-bottom: 20px;
 }
-
-nav .grid {
-  > [class*="column-"] {
-    padding: 0.25rem 1rem;
-  }
+span{
+  color: #4070f4;
 }
-
-#logo {
-  color: $black;
-  font-weight: 700;
-  font-size: 0.875rem;
-  letter-spacing: 0.125rem;
-  text-transform: uppercase;
-  margin: 0;
+.text p{
+  font-size: 18px;
+  line-height: 25px;
+  letter-spacing: 1px;
 }
-
-.container {
-  margin: auto;
-  padding: 0 1rem;
-  max-width: 75rem;
-  width: 100%;
+.data{
+  margin-top: 30px;
 }
-
-main {
-  padding: 2rem 0;
+.hire{
+  font-size: 18px;
+  background: #4070f4;
+  color: #fff;
+  text-decoration: none;
+  border: none;
+  padding: 8px 25px;
+  border-radius: 6px;
+  transition: 0.5s;
 }
-
-.grid {
-  > [class*="column-"] {
-    padding: 1rem;
-  }
-}
-
-.section-heading {
-  transform: rotate(0) translateX(0);
-}
-
-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-footer {
-  text-align: center;
-}
-
-@media (min-width: $md) {
-  body {
-    font-size: 1.125rem;
-  }
-
-  nav {
-    padding: 2.5rem 0 2.5rem 0;
-    ul {
-      justify-content: flex-end;
-    }
-  }
-
-  h1 {
-    font-size: 3.25rem;
-  }
-
-  h2 {
-    font-size: 2.75rem;
-  }
-
-  h3 {
-    font-size: 2.25rem;
-  }
-
-  img {
-    height: 40rem;
-  }
-
-  .section-heading {
-    position: absolute;
-    transform-origin: top left;
-    transform: rotate(-90deg) translateX(-100%);
-  }
-
-  .intro {
-    padding: 1rem;
-  }
-
-  blockquote {
-    width: 30rem;
-    height: 40rem;
-  }
+.hire:hover{
+  background: #000;
+  border: 1px solid #4070f4;
 }
 
